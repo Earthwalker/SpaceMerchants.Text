@@ -180,24 +180,6 @@ namespace SpaceMerchants.Server
 
             Outpost = outpost;
 
-            // check if there's any dividends waiting here
-            if (Outpost.Corporation?.Headquarters == Outpost)
-            {
-                foreach (var item in Cargo.ToDictionary.Keys)
-                {
-                    if (item.StartsWith($"Other.{Outpost.Corporation.Name} Share"))
-                    {
-                        int bits = Wallet.Bits;
-
-                        if (Outpost.Corporation.ShareholderWallets[int.Parse(item.Split(' ').Last())].TransferBits(Wallet))
-                        {
-                            if (Human)
-                                Game.SendMessage(this, $"Received {Wallet.Bits - bits} bits from {Outpost.Corporation.Name} shares");
-                        }
-                    }
-                }
-            }
-
             // update records if the outpost has more recent records
             Outpost.UpdateRecords(Records);
         }

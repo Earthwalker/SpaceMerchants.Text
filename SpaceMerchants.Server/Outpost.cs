@@ -66,11 +66,6 @@ namespace SpaceMerchants.Server
         public const int WarehouseSizeMultiplier = 1;
 
         /// <summary>
-        /// The wallet.
-        /// </summary>
-        private Wallet wallet;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="Outpost"/> class.
         /// </summary>
         /// <param name="name">The name.</param>
@@ -94,7 +89,7 @@ namespace SpaceMerchants.Server
 
             Storage = new Storage(this);
             MarketStorage = new Storage(this);
-            wallet = new Wallet(this);
+            Wallet = new Wallet(this);
             MarketWallet = new Wallet(this);
 
             // DEBUG: add 1000 bit
@@ -148,16 +143,7 @@ namespace SpaceMerchants.Server
         /// Gets the wallet.
         /// </summary>
         /// <value>The wallet.</value>
-        public Wallet Wallet
-        {
-            get
-            {
-                if (Corporation != null)
-                    return Corporation.Employees.Find(e => e.Outpost == this).Earnings;
-                else
-                    return wallet;
-            }
-        }
+        public Wallet Wallet { get; private set; }
 
         /// <summary>
         /// Gets the market wallet.
@@ -165,6 +151,9 @@ namespace SpaceMerchants.Server
         /// <value>The market wallet.</value>
         public Wallet MarketWallet { get; }
 
+        /// <summary>
+        /// Gets the ledger of all the transactions done at this outpost.
+        /// </summary>
         public List<Transaction> MarketLedger { get; } = new List<Transaction>();
 
         /// <summary>
@@ -237,19 +226,6 @@ namespace SpaceMerchants.Server
         /// The records.
         /// </value>
         public List<Record> Records { get; } = new List<Record>();
-
-        /// <summary>
-        /// Gets the corporation we are a member of.
-        /// </summary>
-        /// <value>The corporation.</value>
-        [JsonIgnore]
-        public Corporation Corporation
-        {
-            get
-            {
-                return Game.Corporations.Find(c => c.Employees.Exists(e => e.Outpost == this));
-            }
-        }
 
         /// <summary>
         /// Generates this instance.
@@ -735,7 +711,7 @@ namespace SpaceMerchants.Server
                     bidAmount = Math.Max(1, GetPopularityMultiplier(listing.Item.Split('.').First())) * GetSuggestedValue(listing.Item);
 
                     //Bids.Add(new Bid(listing.Item, Math.Max(1, PopularityIndex[listing.Item.Split('.').First()]), (int)bidAmount, wallet, Storage));
-                    Bids.Add(new Bid(listing.Item, 10, 100, wallet, Storage));
+                    Bids.Add(new Bid(listing.Item, 10, 100, Wallet, Storage));
                 }
             }
         }

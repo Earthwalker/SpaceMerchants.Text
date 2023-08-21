@@ -27,11 +27,6 @@ namespace SpaceMerchants.Server
         public const string ShipDirectory = @"\Ships\";
 
         /// <summary>
-        /// The directory where the corporations are stored.
-        /// </summary>
-        public const string CorporationDirectory = @"\Corporations\";
-
-        /// <summary>
         /// The settings file name.
         /// </summary>
         public const string SettingsFileName = @"\settings.cfg";
@@ -62,11 +57,6 @@ namespace SpaceMerchants.Server
         public const string LocationNamesFileName = @"\LocationNames.txt";
 
         /// <summary>
-        /// The corporation file name.
-        /// </summary>
-        public const string CorporationNamesFileName = @"\CorporationNames.txt";
-
-        /// <summary>
         /// Loads everything.
         /// </summary>
         public static void LoadAll()
@@ -75,10 +65,8 @@ namespace SpaceMerchants.Server
             LoadModifiers();
             LoadItems();
             LoadHeadlines();
-            LoadCorporationNames();
             LoadLocationNames();
             LoadShipNames();
-            LoadCorporations();
             LoadStarSystems();
             LoadShips();
         }
@@ -88,7 +76,6 @@ namespace SpaceMerchants.Server
         /// </summary>
         public static void SaveAll()
         {
-            SaveCorporations();
             SaveStarSystems();
             SaveShips();
         }
@@ -272,24 +259,6 @@ namespace SpaceMerchants.Server
         }
 
         /// <summary>
-        /// Loads the corporations.
-        /// </summary>
-        public static void LoadCorporations()
-        {
-            // ensure the directory exists
-            if (!Directory.Exists(Environment.CurrentDirectory + CorporationDirectory))
-                return;
-
-            // clear existing corporations
-            Game.Corporations.Clear();
-
-            foreach (var fileName in Directory.EnumerateFiles(Environment.CurrentDirectory + CorporationDirectory))
-                Game.Corporations.Add(JsonConvert.DeserializeObject<Corporation>(File.ReadAllText(fileName)));
-
-            Game.WriteLine($"Loaded {Game.Corporations.Count} corporations", MessageType.Message);
-        }
-
-        /// <summary>
         /// Loads the item types.
         /// </summary>
         public static void LoadItems()
@@ -309,22 +278,6 @@ namespace SpaceMerchants.Server
                 if (!Game.ItemTypes.Contains(item.Split('.').First()))
                     Game.ItemTypes.Add(item.Split('.').First());
             }
-        }
-
-        /// <summary>
-        /// Loads the corporation names from the specified directory.
-        /// </summary>
-        public static void LoadCorporationNames()
-        {
-            // ensure the file exists
-            if (!File.Exists(Environment.CurrentDirectory + CorporationNamesFileName))
-                return;
-
-            // clear existing corporation names
-            Game.CorporationNames.Clear();
-
-            // read file
-            Game.CorporationNames.AddRange(File.ReadAllLines(Environment.CurrentDirectory + CorporationNamesFileName));
         }
 
         /// <summary>
@@ -404,21 +357,6 @@ namespace SpaceMerchants.Server
                 File.WriteAllText(Environment.CurrentDirectory + ShipDirectory + ship.Name + ".json", JsonConvert.SerializeObject(ship));
 
             Game.WriteLine($"Saved {Game.Ships.Count} ships", MessageType.Message);
-        }
-
-        /// <summary>
-        /// Saves the corporations.
-        /// </summary>
-        public static void SaveCorporations()
-        {
-            // if the directory doesn't exist, create it
-            if (!Directory.Exists(Environment.CurrentDirectory + CorporationDirectory))
-                Directory.CreateDirectory(Environment.CurrentDirectory + CorporationDirectory);
-
-            foreach (var corporation in Game.Corporations)
-                File.WriteAllText(Environment.CurrentDirectory + CorporationDirectory + corporation.Name + ".json", JsonConvert.SerializeObject(corporation));
-
-            Game.WriteLine($"Saved {Game.Corporations.Count} corporations", MessageType.Message);
         }
     }
 }

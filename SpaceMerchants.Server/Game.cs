@@ -165,12 +165,6 @@ namespace SpaceMerchants.Server
         public static List<string> Headlines { get; } = new List<string>();
 
         /// <summary>
-        /// Gets the corporations.
-        /// </summary>
-        /// <value>The corporations.</value>
-        public static List<Corporation> Corporations { get; } = new List<Corporation>();
-
-        /// <summary>
         /// Gets or sets the star systems.
         /// </summary>
         /// <value>The star systems.</value>
@@ -193,12 +187,6 @@ namespace SpaceMerchants.Server
         /// </summary>
         /// <value>The location names.</value>
         public static List<string> LocationNames { get; } = new List<string>();
-
-        /// <summary>
-        /// Gets the corporation names.
-        /// </summary>
-        /// <value>The corporation names.</value>
-        public static List<string> CorporationNames { get; } = new List<string>();
 
         /// <summary>
         /// Gets the modifiers.
@@ -239,7 +227,7 @@ namespace SpaceMerchants.Server
                 ", MessageType.Message);
 
             WriteLine("A game by Leamware", MessageType.Message);
-            WriteLine("12.19.15", MessageType.Message);
+            WriteLine("8.20.23", MessageType.Message);
             WriteLine();
 
             // generate galaxy
@@ -273,11 +261,6 @@ namespace SpaceMerchants.Server
             StarSystems.Clear();
             for (int i = 0; i < StarSystemsToGenerate; i++)
                 StarSystems.Add(StarSystem.Generate(MinPlanetsPerSystem, MaxPlanetsPerSystem, MinOutpostsPerPlanet, MaxOutpostsPerPlanet));
-
-            // generate corporations
-            Corporations.Clear();
-            for (int i = 0; i < CorporationsToGenerate; i++)
-                Corporations.Add(Corporation.Generate());
 
             // generate ships
             Ships.Clear();

@@ -271,18 +271,7 @@ namespace SpaceMerchants.Server
                     reply.Add($"{selectedPlanet.Name} selected", MessageType.Question);
 
                     for (int i = 0; i < selectedPlanet.Outposts.Count; i++)
-                    {
-                        if (selectedPlanet.Outposts[i].Corporation != null)
-                        {
-                            // check if this is the headquarters
-                            if (selectedPlanet.Outposts[i] == selectedPlanet.Outposts[i].Corporation.Headquarters)
-                                reply.Add($"{i + 1}. {selectedPlanet.Outposts[i].Size} {selectedPlanet.Outposts[i].Name} headquarters of {selectedPlanet.Outposts[i].Corporation.Name}", MessageType.Default);
-                            else
-                                reply.Add($"{i + 1}. {selectedPlanet.Outposts[i].Size} {selectedPlanet.Outposts[i].Name} of {selectedPlanet.Outposts[i].Corporation.Name}", MessageType.Default);
-                        }
-                        else
-                            reply.Add($"{i + 1}. {selectedPlanet.Outposts[i].Size} {selectedPlanet.Outposts[i].Name}", MessageType.Default);
-                    }
+                        reply.Add($"{i + 1}. {selectedPlanet.Outposts[i].Size} {selectedPlanet.Outposts[i].Name}", MessageType.Default);
 
                     reply.Add($"Outpost?", MessageType.Question);
                 }
@@ -306,15 +295,7 @@ namespace SpaceMerchants.Server
                 {
                     Ship.Warp(selectedOutpost);
 
-                    if (selectedOutpost.Corporation != null)
-                    {
-                        if (selectedOutpost == selectedOutpost.Corporation.Headquarters)
-                            reply.Add($"Warped to {selectedOutpost.Name} headquarters of {selectedOutpost.Corporation.Name}", MessageType.Message);
-                        else
-                            reply.Add($"Warped to {selectedOutpost.Name} of {selectedOutpost.Corporation.Name}", MessageType.Message);
-                    }
-                    else
-                        reply.Add($"Warped to {selectedOutpost.Name}", MessageType.Message);
+                    reply.Add($"Warped to {selectedOutpost.Name}", MessageType.Message);
 
                     UseMenu(PlayMenuItem.None);
                 }
@@ -739,11 +720,6 @@ namespace SpaceMerchants.Server
             reply.Add($"Outpost: {Ship.Outpost.Name}", MessageType.Default);
             reply.Add($"Planet: {Ship.Outpost.Planet.Name}", MessageType.Default);
             reply.Add($"StarSystem: {Ship.Outpost.Planet.StarSystem.Name}", MessageType.Default);
-
-            if (Ship.Outpost.Corporation?.Headquarters == Ship.Outpost)
-                reply.Add($"Corporation: Headquarters of {Ship.Outpost.Corporation.Name}", MessageType.Default);
-            else
-                reply.Add($"Corporation: {Ship.Outpost.Corporation?.Name ?? "none"}", MessageType.Default);
 
             var ships = new List<Ship>();
             ships.AddRange(Ship.Outpost.Ships);

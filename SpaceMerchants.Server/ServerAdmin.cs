@@ -113,8 +113,7 @@ namespace SpaceMerchants.Server
                     int totalShipBits = Game.Ships.Sum(s => s.Wallet.Bits);
                     int totalOutpostBits = Game.StarSystems.Sum(s => s.Planets.Sum(p => p.Outposts.Sum(o => o.Wallet.Bits)));
                     int totalMarketBits = Game.StarSystems.Sum(s => s.Planets.Sum(p => p.Outposts.Sum(o => o.MarketWallet.Bits)));
-                    int totalCorporationBits = Game.Corporations.Sum(c => c.Wallet.Bits);
-                    int totalBits = totalShipBits + totalOutpostBits + totalMarketBits + totalCorporationBits;
+                    int totalBits = totalShipBits + totalOutpostBits + totalMarketBits;
 
                     int totalShipCargoWealth = Game.Ships.Sum(s => s.Cargo.SuggestedValue(s.Outpost));
                     int totalOutpostCargoWealth = Game.StarSystems.Sum(s => s.Planets.Sum(p => p.Outposts.Sum(o => o.Storage.SuggestedValue(o))));
@@ -124,7 +123,6 @@ namespace SpaceMerchants.Server
                     Game.WriteLine($"Total ship wealth: {totalShipBits} bits + {totalShipCargoWealth} cargo value ({totalShipBits + totalShipCargoWealth} total)");
                     Game.WriteLine($"Total outpost wealth: {totalOutpostBits} bits + {totalOutpostCargoWealth} cargo value ({totalOutpostBits + totalOutpostCargoWealth} total)");
                     Game.WriteLine($"Total market wealth: {totalMarketBits} bits + {totalMarketCargoWealth} cargo value ({totalMarketBits + totalMarketCargoWealth} total)");
-                    Game.WriteLine($"Total corporation wealth: {totalCorporationBits} bits");
                     Game.WriteLine($"Total wealth: {totalBits} bits + {totalCargoWealth} cargo value ({totalBits + totalCargoWealth} total)");
 
                     double averageShipBits = Game.Ships.Average(s => s.Wallet.Bits);
