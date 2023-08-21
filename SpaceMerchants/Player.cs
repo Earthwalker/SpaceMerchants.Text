@@ -8,7 +8,6 @@ namespace SpaceMerchants
 {
     using System;
     using System.Linq;
-    using Spaghetti;
 
     public enum ShipClass
     {
@@ -122,10 +121,7 @@ namespace SpaceMerchants
         Exit,
     }
 
-    /// <summary>
-    /// Player which implements <see cref="IPlayer"/>.
-    /// </summary>
-    public class Player : IPlayer
+    public class Player
     {
         public Player()
         {
@@ -160,12 +156,6 @@ namespace SpaceMerchants
         /// </summary>
         /// <value>The ship class.</value>
         public ShipClass ShipClass { get; set; }
-
-        /// <summary>
-        /// Gets the connection.
-        /// </summary>
-        /// <value>The connection.</value>
-        public Connection Connection { get; }
 
         /// <summary>
         /// Gets the main menu selection.

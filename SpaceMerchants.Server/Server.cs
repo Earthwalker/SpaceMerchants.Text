@@ -6,121 +6,181 @@
 
 namespace SpaceMerchants.Server
 {
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
-    using Spaghetti;
-    using Windows.Storage.Streams;
+    using System.Threading;
+    using LiteNetLib;
+    using LiteNetLib.Utils;
 
     /// <summary>
-    /// The networking server, which implements <see cref="StreamSocketServer"/>.
+    /// The networking server.
     /// </summary>
-    public class Server : StreamSocketServer
+    public class Server
     {
+        /// <summary>
+        /// First byte of every message determining how the message should be handled.
+        /// </summary>
+        public enum MessageId : byte
+        {
+            /// <summary>
+            /// New player has connected.
+            /// </summary>
+            Connect,
+
+            /// <summary>
+            /// Player has disconnected.
+            /// </summary>
+            Disconnect,
+
+            /// <summary>
+            /// Server or client data.
+            /// </summary>
+            Data,
+
+            /// <summary>
+            /// Server or client updates.
+            /// </summary>
+            Update
+        }
+
+        private EventBasedNetListener listener = new EventBasedNetListener();
+
+        private NetManager server;
+
+        private Timer timer;
+
+        private Player connectingPlayer;
+
+        public bool IsRunning => server?.IsRunning ?? false;
+
+        public int MaxPlayers { get; set; } = 1;
+
+        public string ConnectionKey { get; set; } = "SpaceMerchants";
+
+        public Dictionary<NetPeer, Player> Players { get; private set; } = new Dictionary<NetPeer, Player>();
+
         /// <summary>
         /// Starts listening at the specified port.
         /// </summary>
         /// <param name="port">The port.</param>
-        /// <param name="maxPlayers">The maximum players.</param>
         /// <returns>The task.</returns>
-        public async Task Start(ushort port, byte maxPlayers)
+        public Server(int port)
         {
-            MaxPlayers = maxPlayers;
+            server = new NetManager(listener);
+            server.Start(port);
 
-            await Start(port);
+            listener.ConnectionRequestEvent += OnRequestEvent;
+            listener.NetworkReceiveEvent += OnReceiveEvent;
+            listener.PeerConnectedEvent += OnConnectedEvent;
+            listener.PeerDisconnectedEvent += OnDisconnectedEvent;
 
-            if (Running)
-                Game.WriteLine($"Server listening on port {port}", MessageType.Message);
-            else
-                Game.WriteLine($"Failed to start server on port {port}", MessageType.Error);
+            timer = new Timer((obj) => Update(), null, 0, server.UpdateTime);
+
+            Game.WriteLine($"Server listening on port {port}", MessageType.Message);
         }
 
-        /// <summary>
-        /// Raises the <see cref="Core.ConnectEvent"/> event.
-        /// </summary>
-        /// <param name="args">
-        /// The <see cref="ConnectionEventArgs"/> instance containing the event data.
-        /// </param>
-        public override void OnConnectEvent(ConnectionEventArgs args)
+        public void Stop()
         {
-            // read player data from the provided buffer
-            using (var reader = DataReader.FromBuffer(args.Buffer))
+            server.Stop(true);
+
+            listener.ConnectionRequestEvent -= OnRequestEvent;
+            listener.NetworkReceiveEvent -= OnReceiveEvent;
+            listener.PeerConnectedEvent -= OnConnectedEvent;
+            listener.PeerDisconnectedEvent -= OnDisconnectedEvent;
+
+            timer?.Dispose();
+        }
+
+        private void OnRequestEvent(ConnectionRequest request)
+        {
+            if (server.ConnectedPeersCount < MaxPlayers)
             {
-                var messageId = (MessageId)reader.ReadByte();
-                string name = reader.ReadStringWithByteLength();
+                string key = request.Data.GetString();
+
+                if (string.CompareOrdinal(key, ConnectionKey) != 0)
+                {
+                    request.Reject();
+                    Game.WriteLine($"Player attempted to connect with wrong key", MessageType.Message);
+
+                    return;
+                }
+
+                string name = request.Data.GetString();
 
                 // create the player
-                var newPlayer = new Player(name, false, args.Connection);
+                connectingPlayer = new Player(name, false);
 
                 // ensure the player has a valid ship class
-                byte shipClassIndex = reader.ReadByte();
+                byte shipClassIndex = request.Data.GetByte();
 
                 if (shipClassIndex <= (byte)ShipClass.Num || shipClassIndex >= (byte)ShipClass.Num)
                     shipClassIndex = (byte)ShipClass.Medium;
 
                 // set up the new player's ship at a random outpost
-                newPlayer.Ship = new Ship(name, Utility.PickOutpost(), (ShipClass)shipClassIndex, true);
+                connectingPlayer.Ship = new Ship(name, Utility.PickOutpost(), (ShipClass)shipClassIndex, true);
 
                 // add the ship to the game's ship list
-                Game.Ships.Add(newPlayer.Ship);
-
-                byte id = (byte)AddPlayer(newPlayer);
-
-                Game.WriteLine($"Player {name}({id}) connected", MessageType.Message);
-
-                // raise the base event
-                base.OnConnectEvent(new ConnectionEventArgs(args.Buffer, newPlayer));
+                Game.Ships.Add(connectingPlayer.Ship);
+                request.Accept();
+            }
+            else
+            {
+                request.Reject();
+                Game.WriteLine($"Player attempted to connect with wrong key", MessageType.Message);
             }
         }
 
-        /// <summary>
-        /// Raises the <see cref="Core.DisconnectEvent"/> event.
-        /// </summary>
-        /// <param name="args">
-        /// The <see cref="ConnectionEventArgs"/> instance containing the event data.
-        /// </param>
-        public override void OnDisconnectEvent(ConnectionEventArgs args)
+        private void OnReceiveEvent(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
-            var disconnectingPlayers = Players.Where(p => p.Value.Connection == args.Connection);
+            OnUpdateEvent(peer, reader);
 
-            // raise the base event
-            base.OnDisconnectEvent(new ConnectionEventArgs(args.Buffer, args.Connection));
+            reader.Recycle();
+        }
 
-            foreach (var disconnectingPlayer in disconnectingPlayers)
-            {
-                Game.WriteLine($"Player {(disconnectingPlayer.Value as Player).Name}({disconnectingPlayer.Key}) disconnected", MessageType.Message);
+        private void OnConnectedEvent(NetPeer peer)
+        {
+            Players.Add(peer, connectingPlayer);
 
-                // move the ship to somewhere nothing is
-                (disconnectingPlayer.Value as Player).Ship.Warp();
+            Game.WriteLine($"Player {connectingPlayer?.Name}({peer.Id}) connected", MessageType.Message);
+        }
 
-                // remove the player's ship
-                Game.Ships.Remove((disconnectingPlayer.Value as Player).Ship);
-            }
+        private void OnDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
+        {
+            var player = Players[peer];
+
+            Game.WriteLine($"Player {player?.Name}({peer.Id}) disconnected", MessageType.Message);
+
+            // move the ship to somewhere nothing is
+            player?.Ship.Warp();
+
+            // remove the player's ship
+            Game.Ships.Remove(player?.Ship);
 
             // remove the players
-            RemovePlayers(args.Connection);
+            Players.Remove(peer);
         }
 
-        /// <summary>
-        /// Raises the <see cref="Core.UpdateEvent"/> event.
-        /// </summary>
-        /// <param name="args">The <see cref="DataEventArgs"/> instance containing the event data.</param>
-        public override void OnUpdateEvent(DataEventArgs args)
+        private void OnUpdateEvent(NetPeer peer, NetPacketReader reader)
         {
-            using (var reader = DataReader.FromBuffer(args.Buffer))
-            {
-                // 1 byte for the message id
-                var messageId = (MessageId)reader.ReadByte();
+            var player = Players[peer];
 
-                // loop through each player on the connection
-                foreach (var player in Players.Where(p => p.Value.Connection == args.Connection))
-                {
-                    byte selection = reader.ReadByte();
-                    (player.Value as Player).Input = reader.ReadStringWithByteLength();
-                    (player.Value as Player).UseMenu((PlayMenuItem)selection);
-                }
-            }
+            if (player == null)
+                return;
 
-            base.OnUpdateEvent(args);
+            byte selection = reader.GetByte();
+            player.Input = reader.GetString();
+            player.UseMenu((PlayMenuItem)selection);
+        }
+
+        public void Send(NetPeer peer, NetDataWriter writer)
+        {
+            peer.Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
+        private void Update()
+        {
+            server.PollEvents();
         }
     }
 }

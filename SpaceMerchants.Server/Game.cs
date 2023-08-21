@@ -11,9 +11,7 @@ namespace SpaceMerchants.Server
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Linq;
-    using System.Timers;
-    using Spaghetti;
-    using Windows.Storage.Streams;
+    using LiteNetLib.Utils;
 
     /// <summary>
     /// Types of console messages.
@@ -59,7 +57,7 @@ namespace SpaceMerchants.Server
         /// Gets or sets the maximum players.
         /// </summary>
         /// <value>The maximum players.</value>
-        public static byte MaxPlayers { get; set; }
+        public static int MaxPlayers { get; set; }
 
         /// <summary>
         /// The console colors.
@@ -70,7 +68,13 @@ namespace SpaceMerchants.Server
         /// Gets or sets the port.
         /// </summary>
         /// <value>The port.</value>
-        public static ushort Port { get; set; }
+        public static int Port { get; set; }
+
+        /// <summary>
+        /// Gets or sets the connection key.
+        /// </summary>
+        /// <value>The port.</value>
+        public static string ConnectionKey { get; set; }
 
         /// <summary>
         /// Gets or sets the name.
@@ -227,15 +231,18 @@ namespace SpaceMerchants.Server
                 ", MessageType.Message);
 
             WriteLine("A game by Leamware", MessageType.Message);
-            WriteLine("8.20.23", MessageType.Message);
+            WriteLine("8.21.23", MessageType.Message);
             WriteLine();
 
             // generate galaxy
             Generate();
 
             // create server
-            Server = new Server();
-            Server.Start(Port, MaxPlayers).Wait();
+            Server = new Server(Port)
+            {
+                MaxPlayers = MaxPlayers,
+                ConnectionKey = ConnectionKey
+            };
 
             // set tick time span
             Time.TickEvent += SendUpdate;
@@ -245,11 +252,11 @@ namespace SpaceMerchants.Server
             ServerAdmin.ShowHelp();
 
             // listen for input while the game is running
-            while (Server.Running)
+            while (Server.IsRunning)
                 ServerAdmin.MainMenu();
 
             // shut everything down
-            Server.Close();
+            Server.Stop();
         }
 
         /// <summary>
@@ -310,37 +317,35 @@ namespace SpaceMerchants.Server
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         public static void SendUpdate(object sender, EventArgs e)
         {
-            foreach (var connection in Server.Connections)
+            foreach (var player in Server.Players)
             {
-                using (var writer = new DataWriter())
+                if (player.Value == null)
+                    continue;
+
+                var writer = new NetDataWriter();
+                bool send = false;
+
+                // send batch update for all the players on a connection
+                int lines = player.Value.Replies.Count;
+
+                if (lines > 0)
                 {
-                    bool send = false;
+                    writer.Put((byte)lines);
 
-                    // send batch update for all the players on a connection
-                    foreach (var player in Server.Players.Values.Where(p => p.Connection == connection))
+                    foreach (var reply in player.Value.Replies)
                     {
-                        int lines = (player as Player).Replies.Count;
-
-                        if (lines > 0)
-                        {
-                            writer.WriteByte((byte)lines);
-
-                            foreach (var reply in (player as Player).Replies)
-                            {
-                                writer.WriteStringWithByteLength(reply.Key);
-                                writer.WriteByte((byte)reply.Value);
-                            }
-
-                            (player as Player).Replies.Clear();
-
-                            send = true;
-                        }
+                        writer.Put(reply.Key);
+                        writer.Put((byte)reply.Value);
                     }
 
-                    // send if we have something to send
-                    if (send)
-                        Server.Send(MessageId.Update, writer.DetachBuffer(), connection);
+                    player.Value.Replies.Clear();
+
+                    send = true;
                 }
+
+                // send if we have something to send
+                if (send)
+                    Server.Send(player.Key, writer);
             }
 
             // show stats at midnight
@@ -361,8 +366,11 @@ namespace SpaceMerchants.Server
 
             foreach (var player in Server.Players)
             {
-                if ((player.Value as Player).Ship == ship)
-                    (player.Value as Player).Replies.Add(message, messageType);
+                if (player.Value == null)
+                    continue;
+
+                if (player.Value.Ship == ship)
+                    player.Value.Replies.Add(message, messageType);
             }
         }
 

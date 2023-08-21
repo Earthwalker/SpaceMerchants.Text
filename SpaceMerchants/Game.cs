@@ -11,8 +11,7 @@ namespace SpaceMerchants
     using System.IO;
     using System.Linq;
     using System.Threading;
-    using Spaghetti;
-    using Windows.Storage.Streams;
+    using LiteNetLib.Utils;
 
     /// <summary>
     /// Types of console messages.
@@ -75,7 +74,13 @@ namespace SpaceMerchants
         /// Gets or sets the server port.
         /// </summary>
         /// <value>The port.</value>
-        public static ushort Port { get; set; } = 11000;
+        public static int Port { get; set; } = 11000;
+
+        /// <summary>
+        /// Gets or sets the connection key.
+        /// </summary>
+        /// <value>The host.</value>
+        public static string ConnectionKey { get; set; }
 
         /// <summary>
         /// Gets or sets the player.
@@ -122,7 +127,7 @@ namespace SpaceMerchants
                 ", MessageType.Message);
 
             WriteLine("A game by Leamware", MessageType.Message);
-            WriteLine("12.19.15", MessageType.Message);
+            WriteLine("8.21.23", MessageType.Message);
             WriteLine();
 
             // listen for input while the game is running
@@ -148,7 +153,7 @@ namespace SpaceMerchants
                             break;
 
                         case MainMenuItem.Join:
-                            if (Client?.Running != true)
+                            if (Client?.IsRunning != true)
                             {
                                 if (Player.SelectHostMenu())
                                 {
@@ -156,12 +161,12 @@ namespace SpaceMerchants
                                     Player.PlayMenuSelection = PlayMenuItem.None;
 
                                     // create client and connect
-                                    Client = new Client();
-                                    Client.Connect(Host, Port).Wait();
+                                    Client = new Client(Host, Port);
+
                                     StartTimer();
 
                                     // show help
-                                    if (Client?.Running == true)
+                                    if (Client?.IsRunning == true)
                                         Player.ShowHelp();
                                 }
                                 else
@@ -170,7 +175,7 @@ namespace SpaceMerchants
                             else
                             {
                                 // exit to main menu if we get disconnected from the server
-                                if (Client?.Running == true)
+                                if (Client?.IsRunning == true)
                                 {
                                     Player.PlayMenu();
 
@@ -179,7 +184,7 @@ namespace SpaceMerchants
 
                                     // check if we are disconnecting
                                     if (Player.MainMenuSelection == MainMenuItem.None)
-                                        Client.Close();
+                                        Client.Stop();
                                 }
                                 else
                                     Player.MainMenuSelection = MainMenuItem.None;
@@ -192,7 +197,7 @@ namespace SpaceMerchants
             SaveSettings();
 
             // shut everything down
-            Client?.Close();
+            Client?.Stop();
             timer?.Dispose();
         }
 
@@ -233,6 +238,10 @@ namespace SpaceMerchants
                         ushort port;
                         if (ushort.TryParse(splitLine.Last(), out port))
                             Port = port;
+                        break;
+
+                    case "KEY":
+                        ConnectionKey = splitLine.Last();
                         break;
 
                     case "DEFAULTCOLOR":
@@ -324,17 +333,16 @@ namespace SpaceMerchants
             if (!Player.ReadyToSend || !Player.ReceivedReply)
                 return;
 
-            using (var writer = new DataWriter())
-            {
-                // write player action
-                writer.WriteByte((byte)Player.PlayMenuSelection);
+            var writer = new NetDataWriter();
 
-                // write player input
-                writer.WriteStringWithByteLength(Player.Input);
+            // write player action
+            writer.Put((byte)Player.PlayMenuSelection);
 
-                // send the message
-                Client.Send(MessageId.Update, writer.DetachBuffer());
-            }
+            // write player input
+            writer.Put(Player.Input);
+
+            // send the message
+            Client.Send(writer);
 
             Player.Input = string.Empty;
             Player.ReadyToSend = false;

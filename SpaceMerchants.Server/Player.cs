@@ -9,7 +9,6 @@ namespace SpaceMerchants.Server
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using Spaghetti;
 
     /// <summary>
     /// Play menu.
@@ -60,19 +59,17 @@ namespace SpaceMerchants.Server
     /// <summary>
     /// Player which implements <see cref="IPlayer"/>.
     /// </summary>
-    public class Player : IPlayer
+    public class Player
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Player"/> class.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="local">if set to <c>true</c> we are local.</param>
-        /// <param name="connection">The connection.</param>
-        public Player(string name, bool local, Connection connection)
+        public Player(string name, bool local)
         {
             Name = name;
             Local = local;
-            Connection = connection;
         }
 
         /// <summary>
@@ -86,12 +83,6 @@ namespace SpaceMerchants.Server
         /// </summary>
         /// <value><c>true</c> if local; otherwise, <c>false</c>.</value>
         public bool Local { get; }
-
-        /// <summary>
-        /// Gets the connection.
-        /// </summary>
-        /// <value>The connection.</value>
-        public Connection Connection { get; }
 
         /// <summary>
         /// Gets or sets the ship.

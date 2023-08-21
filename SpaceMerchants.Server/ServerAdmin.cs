@@ -168,7 +168,7 @@ namespace SpaceMerchants.Server
                     break;
                 // exit the current menu
                 case MainMenuItem.Exit:
-                    Game.Server.Close();
+                    Game.Server.Stop();
                     break;
             }
 		}

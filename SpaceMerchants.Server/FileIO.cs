@@ -104,15 +104,19 @@ namespace SpaceMerchants.Server
                         break;
 
                     case "MAXPLAYERS":
-                        byte maxPlayers;
-                        if (byte.TryParse(splitLine.Last(), out maxPlayers))
+                        int maxPlayers;
+                        if (int.TryParse(splitLine.Last(), out maxPlayers))
                             Game.MaxPlayers = maxPlayers;
                         break;
 
                     case "PORT":
-                        ushort port;
-                        if (ushort.TryParse(splitLine.Last(), out port))
+                        int port;
+                        if (int.TryParse(splitLine.Last(), out port))
                             Game.Port = port;
+                        break;
+
+                    case "KEY":
+                        Game.ConnectionKey = splitLine.Last();
                         break;
 
                     case "HOURSPERTICK":
