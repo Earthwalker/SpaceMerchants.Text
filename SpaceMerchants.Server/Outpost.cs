@@ -220,14 +220,6 @@ namespace SpaceMerchants.Server
         public string CurrentHeadline { get; private set; }
 
         /// <summary>
-        /// Gets the records.
-        /// </summary>
-        /// <value>
-        /// The records.
-        /// </value>
-        public List<Record> Records { get; } = new List<Record>();
-
-        /// <summary>
         /// Generates this instance.
         /// </summary>
         /// <param name="planet">The planet.</param>
@@ -427,9 +419,6 @@ namespace SpaceMerchants.Server
                         winningBidsOfItem.RemoveAt(0);
 
                     OldListings.Remove(lister);
-
-                    // update records
-                    var oldRecord = Records.Find(r => r.Outpost == this);
                 }
             }
             
@@ -544,34 +533,6 @@ namespace SpaceMerchants.Server
                 return lastSoldPrice.Price;
             else
                 return Utility.StartingPrice();
-        }
-
-        /// <summary>
-        /// Updates the records.
-        /// </summary>
-        /// <param name="records">The records.</param>
-        public void UpdateRecords(List<Record> records)
-        {
-            Record localRecord;
-
-            foreach (var record in records)
-            {
-                localRecord = Records.Find(r => r.Outpost == record.Outpost);
-
-                if (localRecord.Outpost == null)
-                    Records.Add(record);
-                else
-                {
-                    if (record.DateTime > localRecord.DateTime)
-                    {
-                        // remove old record
-                        Records.Remove(localRecord);
-
-                        // add new record
-                        Records.Add(record);
-                    }
-                }
-            }
         }
 
         /// <summary>

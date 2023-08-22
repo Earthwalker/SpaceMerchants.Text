@@ -168,48 +168,10 @@ namespace SpaceMerchants.Server
         /// <param name="outpost">The outpost.</param>
         public void Warp(Outpost outpost = null)
         {
-            if (outpost == null)
-                outpost = Utility.PickOutpost();
-
-            if (Outpost == outpost)
-                return;
-
-            // update records from old outpost if any
-            if (Outpost != null)
-                UpdateRecords(Outpost.Records);
-
-            Outpost = outpost;
-
-            // update records if the outpost has more recent records
-            Outpost.UpdateRecords(Records);
-        }
-
-        /// <summary>
-        /// Updates the records.
-        /// </summary>
-        /// <param name="records">The records.</param>
-        public void UpdateRecords(List<Record> records)
-        {
-            Record localRecord;
-
-            foreach (var record in records)
-            {
-                localRecord = Records.Find(r => r.Outpost == record.Outpost);
-
-                if (localRecord.Outpost == null)
-                    Records.Add(record);
-                else
-                {
-                    if (record.DateTime > localRecord.DateTime)
-                    {
-                        // remove old record
-                        Records.Remove(localRecord);
-
-                        // add new record
-                        Records.Add(record);
-                    }
-                }
-            }
+            if (outpost != null)
+                Outpost = outpost;
+            else
+                Outpost = Utility.PickOutpost();
         }
 
         /// <summary>
