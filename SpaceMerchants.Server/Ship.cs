@@ -239,7 +239,7 @@ namespace SpaceMerchants.Server
 
                     foreach (var item in cargo)
                     {
-                        var startingBid = Utility.RNG.NextDouble(.8, 1.2, 4) * Outpost.GetSuggestedValue(item.Key);
+                        var startingBid = Utility.RNG.NextDouble(.8, 1.2, 4) * Outpost.GetLastSoldPrice(item.Key);
 
                         Outpost.CreateListing(item.Key, Utility.RNG.Next(item.Value), Cargo, (int)startingBid, Wallet);
                     }

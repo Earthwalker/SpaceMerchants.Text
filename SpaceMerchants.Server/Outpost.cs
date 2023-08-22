@@ -292,7 +292,7 @@ namespace SpaceMerchants.Server
 
             // if price is 0, use pricing guide
             if (startingBidAmount == 0)
-                startingBidAmount = GetSuggestedValue(item);
+                startingBidAmount = GetLastSoldPrice(item);
 
             var listings = new List<Listing>();
 
@@ -530,44 +530,20 @@ namespace SpaceMerchants.Server
         }
 
         /// <summary>
-        /// Gets the suggested value for the specified item.
+        /// Gets the last sold price for the specified item.
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns>The price.</returns>
-        public int GetSuggestedValue(string item)
+        public int GetLastSoldPrice(string item)
         {
             Contract.Requires(!string.IsNullOrEmpty(item));
 
-            if (!PricingGuide.Exists(i => i.Item == item))
-            {
-                var newItem = new LedgerItem(item);
-                PricingGuide.Add(newItem);
-                newItem.Add(Utility.StartingPrice());
-                return newItem.Price;
-            }
+            var lastSoldPrice = MarketLedger.LastOrDefault(i => i.Item == item);
 
-            return PricingGuide.Find(i => i.Item == item).Price;
-        }
-
-        /// <summary>
-        /// Updates the pricing guide.
-        /// </summary>
-        /// <param name="item">The item.</param>
-        /// <param name="value">The value.</param>
-        public void UpdatePricingGuide(string item, int value)
-        {
-            Contract.Requires(!string.IsNullOrEmpty(item));
-            Contract.Requires(value >= 0);
-
-            if (!PricingGuide.Exists(i => i.Item == item))
-            {
-                var newItem = new LedgerItem(item);
-                PricingGuide.Add(newItem);
-                newItem.Add(Utility.StartingPrice());
-                newItem.Add(value);
-            }
+            if (lastSoldPrice != default)
+                return lastSoldPrice.Price;
             else
-                PricingGuide.Find(i => i.Item == item).Add(value);
+                return Utility.StartingPrice();
         }
 
         /// <summary>
@@ -691,7 +667,7 @@ namespace SpaceMerchants.Server
                     var storage = Storage.ToDictionary.ToList();
 
                     foreach (var item in storage)
-                        CreateListing(item.Key, Utility.RNG.Next(item.Value), Storage, (int)(GetSuggestedValue(item.Key) * .9), Wallet);
+                        CreateListing(item.Key, Utility.RNG.Next(item.Value), Storage, (int)(GetLastSoldPrice(item.Key) * .9), Wallet);
                 }
             }
 
@@ -709,7 +685,7 @@ namespace SpaceMerchants.Server
                     //if (GetPopularityMultiplier(listing.Item.Split('.').First()) < 1)
                     //    continue;
 
-                    bidAmount = Math.Max(1, GetPopularityMultiplier(listing.Item.Split('.').First())) * GetSuggestedValue(listing.Item);
+                    bidAmount = Math.Max(1, GetPopularityMultiplier(listing.Item.Split('.').First())) * GetLastSoldPrice(listing.Item);
 
                     //Bids.Add(new Bid(listing.Item, Math.Max(1, PopularityIndex[listing.Item.Split('.').First()]), (int)bidAmount, wallet, Storage));
                     Bids.Add(new Bid(listing.Item, 10, 100, Wallet, Storage));

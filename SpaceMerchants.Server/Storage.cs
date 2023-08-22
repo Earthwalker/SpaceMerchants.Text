@@ -238,17 +238,18 @@ namespace SpaceMerchants.Server
         /// <summary>
         /// Gets the suggested value according to the pricing guide.
         /// </summary>
+        /// <param name="outpost">The outpost we are are checking at.</param>
         /// <value>The suggested value.</value>
-        public int SuggestedValue(Outpost pricingGuide)
+        public int SuggestedValue(Outpost outpost)
         {
-            Contract.Requires(pricingGuide != null);
+            Contract.Requires(outpost != null);
 
             int value = 0;
 
             foreach (var item in items)
             {
-                if (pricingGuide != null)
-                    value += pricingGuide.GetSuggestedValue(item.Key) * item.Value;
+                if (outpost != null)
+                    value += outpost.GetLastSoldPrice(item.Key) * item.Value;
                 else
                     value += Utility.StartingPrice() * item.Value;
             }
