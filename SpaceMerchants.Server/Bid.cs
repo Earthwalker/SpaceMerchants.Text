@@ -35,11 +35,6 @@ namespace SpaceMerchants.Server
             BidAmount = bidAmount;
             Wallet = wallet;
             Storage = storage;
-
-            if (BidAmount < 80)
-            {
-                // DEBUG
-            }
         }
 
         /// <summary>

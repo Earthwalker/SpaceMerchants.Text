@@ -135,9 +135,6 @@ namespace SpaceMerchants.Server
 
                     Game.WriteLine($"Average outpost wealth: {averageOutpostBits} bits + {averageOutpostCargoValue} cargo value ({averageOutpostBits + averageOutpostCargoValue} total)");
 
-                    double averageOutpostItemValue = Game.StarSystems.Average(s => s.Planets.Average(p => p.Outposts.Average(o => o.PricingGuide.Average(l => l.Price))));
-                    Game.WriteLine($"Average outpost item value: {averageOutpostItemValue} bits");
-
                     var soldPrices = new List<int>();
 
                     foreach (var starSystem in Game.StarSystems)

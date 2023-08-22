@@ -157,12 +157,6 @@ namespace SpaceMerchants.Server
         public List<Transaction> MarketLedger { get; } = new List<Transaction>();
 
         /// <summary>
-        /// Gets the pricing guide.
-        /// </summary>
-        /// <value>The pricing guide.</value>
-        public List<LedgerItem> PricingGuide { get; } = new List<LedgerItem>();
-
-        /// <summary>
         /// Gets the old listings.
         /// </summary>
         /// <value>The old listings.</value>
@@ -307,7 +301,6 @@ namespace SpaceMerchants.Server
             var winningBids = new List<KeyValuePair<string, int>>();
             int amount = 0;
             var marketStorage = MarketStorage.ToDictionary.ToList();
-            int marketBits;
             List<string> debugMessages = new List<string>();
 
             foreach (var item in marketStorage)
@@ -364,11 +357,6 @@ namespace SpaceMerchants.Server
 
                         MarketLedger.Add(new Transaction(null, bid.Wallet, item.Key, bid.BidAmount));
 
-                        if (bid.BidAmount < 100)
-                        {
-                            // DEBUG
-                        }
-
                         debugMessages.Add($"record: {i}");
                     }
 
@@ -394,7 +382,8 @@ namespace SpaceMerchants.Server
                 var listers = OldListings.FindAll(l => l.Item == item.Key);
                 listers.Shuffle();
 
-                marketBits = MarketWallet.Bits;
+                if (winningBids.Count == 0)
+                    continue;
 
                 var winningBidsOfItem = winningBids.FindAll(b => b.Key == item.Key);
 
@@ -424,11 +413,6 @@ namespace SpaceMerchants.Server
             
             // transfer leftovers to outpost
             //MarketStorage.TransferCargo(Storage);
-
-            if (MarketWallet.Bits > 0)
-            {
-                // DEBUG
-            }
 
             /*var winningBids = new List<Bid>();
 
@@ -545,7 +529,7 @@ namespace SpaceMerchants.Server
             Contract.Requires(!string.IsNullOrEmpty(itemType));
 
             if (!PopularityIndex.ContainsKey(itemType))
-                PopularityIndex.Add(itemType, 0);
+                PopularityIndex.Add(itemType, 1);
 
             double result = 1;
             int sign = Math.Sign(PopularityIndex[itemType]);
@@ -628,7 +612,11 @@ namespace SpaceMerchants.Server
                     var storage = Storage.ToDictionary.ToList();
 
                     foreach (var item in storage)
-                        CreateListing(item.Key, Utility.RNG.Next(item.Value), Storage, (int)(GetLastSoldPrice(item.Key) * .9), Wallet);
+                    {
+                        var startingBid = Utility.RNG.NextDouble(.8, 1, 4) * GetLastSoldPrice(item.Key);
+
+                        CreateListing(item.Key, Utility.RNG.Next(item.Value), Storage, (int)startingBid, Wallet);
+                    }
                 }
             }
 
@@ -642,14 +630,17 @@ namespace SpaceMerchants.Server
                     if (listing.OwnerWallet == Wallet)
                         continue;
 
+                    if (Utility.RNG.Next(2) != 0)
+                        continue;
+
                     // with no minimum bids, don't even place bids if not popular
                     //if (GetPopularityMultiplier(listing.Item.Split('.').First()) < 1)
                     //    continue;
 
-                    bidAmount = Math.Max(1, GetPopularityMultiplier(listing.Item.Split('.').First())) * GetLastSoldPrice(listing.Item);
+                    bidAmount = GetPopularityMultiplier(listing.Item.Split('.').First()) * Utility.RNG.NextDouble(.8, 1.2, 4) * listing.StartingBid;
 
                     //Bids.Add(new Bid(listing.Item, Math.Max(1, PopularityIndex[listing.Item.Split('.').First()]), (int)bidAmount, wallet, Storage));
-                    Bids.Add(new Bid(listing.Item, 10, 100, Wallet, Storage));
+                    Bids.Add(new Bid(listing.Item, Utility.RNG.Next(1, 5), (int)bidAmount, Wallet, Storage));
                 }
             }
         }
