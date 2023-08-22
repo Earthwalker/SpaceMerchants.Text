@@ -225,10 +225,13 @@ namespace SpaceMerchants.Server
             }
 
             // list products at 6am
-            if (Time.DateTime.Hour == 6 && !Outpost.OldListings.Exists(l => l.OwnerWallet == Wallet))
+            if (Time.DateTime.Hour == 6 && !Outpost.OldListings.Exists(l => l.OwnerWallet == Wallet) && !Outpost.NewListings.Exists(l => l.OwnerWallet == Wallet))
             {
                 if (Utility.RNG.Next(10) == 0)
+                {
                     Warp();
+                    return;
+                }
 
                 if (Cargo.Contains())
                 {
@@ -236,7 +239,7 @@ namespace SpaceMerchants.Server
 
                     foreach (var item in cargo)
                     {
-                        var startingBid = Utility.RNG.NextDouble(1, 1.2, 4) * Outpost.GetSuggestedValue(item.Key);
+                        var startingBid = Utility.RNG.NextDouble(.8, 1.2, 4) * Outpost.GetSuggestedValue(item.Key);
 
                         Outpost.CreateListing(item.Key, Utility.RNG.Next(item.Value), Cargo, (int)startingBid, Wallet);
                     }
@@ -253,10 +256,10 @@ namespace SpaceMerchants.Server
                 {
                     foreach (var listing in Outpost.OldListings)
                     {
-                        bidAmount = Utility.RNG.NextDouble(.8, 1, 4) * Outpost.GetSuggestedValue(listing.Item);
-
+                        bidAmount = Utility.RNG.NextDouble(1, 1.2, 4) * listing.StartingBid;
+                        
                         // TODO: set amount we want based on popularity
-                        Outpost.Bids.Add(new Bid(listing.Item, Utility.RNG.Next(1, 5), (int)100, Wallet, Cargo));
+                        Outpost.Bids.Add(new Bid(listing.Item, Utility.RNG.Next(1, 5), (int)bidAmount, Wallet, Cargo));
                     }
                 }
             }

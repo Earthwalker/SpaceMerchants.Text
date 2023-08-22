@@ -297,7 +297,7 @@ namespace SpaceMerchants.Server
             var listings = new List<Listing>();
 
             for (int i = 0; i < amount; i++)
-                listings.Add(new Listing(item, wallet, storage));
+                listings.Add(new Listing(item, wallet, storage, startingBidAmount));
 
             NewListings.AddRange(listings);
 
@@ -316,7 +316,7 @@ namespace SpaceMerchants.Server
             int amount = 0;
             var marketStorage = MarketStorage.ToDictionary.ToList();
             int marketBits;
-            List<string> messages = new List<string>();
+            List<string> debugMessages = new List<string>();
 
             foreach (var item in marketStorage)
             {
@@ -349,20 +349,20 @@ namespace SpaceMerchants.Server
                     if (amountBought == 0)
                         continue;
 
-                    messages.Add($"new bid");
+                    debugMessages.Add($"new bid");
 
                     // transfer the cargo
                     amountBought = MarketStorage.TransferCargo(bid.Storage, item.Key, amountBought);
 
-                    messages.Add($"amount bought: {amountBought}");
-
                     if (amountBought == 0)
                         continue;
+
+                    debugMessages.Add($"amount bought: {amountBought}");
 
                     if (!bid.Wallet.TransferBits(MarketWallet, bid.BidAmount * amountBought))
                     {
                         bid.Storage.TransferCargo(MarketStorage, item.Key, amountBought);
-                        messages.Add($"transfered cargo");
+                        debugMessages.Add($"transfered cargo");
                         continue;
                     }
 
@@ -377,7 +377,7 @@ namespace SpaceMerchants.Server
                             // DEBUG
                         }
 
-                        messages.Add($"record: {i}");
+                        debugMessages.Add($"record: {i}");
                     }
 
                     amount -= amountBought;
@@ -385,7 +385,7 @@ namespace SpaceMerchants.Server
                     // if the winner is the outpost, things are handled differently
                     if (bid.Storage == Storage)
                     {
-                        messages.Add($"storage");
+                        debugMessages.Add($"storage");
                         // lower popularity index since we've satisfied the demand
                         PopularityIndex[item.Key.Split('.').First()] -= amountBought;// -= (int)(.01 * PopularityIndex.Sum(i => i.Value)) * amountBought;
 
@@ -394,6 +394,8 @@ namespace SpaceMerchants.Server
                         if (!item.Key.EndsWith("Warehouse"))
                             Storage.Remove(item.Key, amountBought);
                     }
+
+                    break;
                 }
 
                 // pay listers
@@ -404,23 +406,22 @@ namespace SpaceMerchants.Server
 
                 var winningBidsOfItem = winningBids.FindAll(b => b.Key == item.Key);
 
-                messages.Add($"winning bids: {winningBidsOfItem.Count}");
-                messages.Add($"listers: {listers.Count}");
+                debugMessages.Add($"winning bids: {winningBidsOfItem.Count}");
+                debugMessages.Add($"listers: {listers.Count}");
 
                 amount = item.Value;
                 foreach (var lister in listers)
                 {
-                    messages.Add($"amount: {amount}");
+                    debugMessages.Add($"amount: {amount}");
 
                     if (amount == 0)
                         break;
 
+                    // Make sure the winning bidder still has enough funds.
                     if (!MarketWallet.TransferBits(lister.OwnerWallet, winningBidsOfItem.FirstOrDefault().Value))
-                    {
-                        // DEBUG
-                    }
+                        continue;
 
-                    messages.Add($"got money: {winningBidsOfItem.FirstOrDefault().Value}");
+                    debugMessages.Add($"got money: {winningBidsOfItem.FirstOrDefault().Value}");
 
                     if (winningBidsOfItem.Count > 0)
                         winningBidsOfItem.RemoveAt(0);
@@ -430,10 +431,10 @@ namespace SpaceMerchants.Server
                     // update records
                     var oldRecord = Records.Find(r => r.Outpost == this);
                 }
-
-                // transfer leftovers to outpost
-                MarketStorage.TransferCargo(Storage);
             }
+            
+            // transfer leftovers to outpost
+            //MarketStorage.TransferCargo(Storage);
 
             if (MarketWallet.Bits > 0)
             {

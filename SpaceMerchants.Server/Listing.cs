@@ -19,7 +19,7 @@ namespace SpaceMerchants.Server
         /// <param name="item">The item.</param>
         /// <param name="ownerWallet">The wallet.</param>
         /// <param name="storage">The storage.</param>
-        public Listing(string item, Wallet ownerWallet, Storage storage)
+        public Listing(string item, Wallet ownerWallet, Storage storage, int startingBid)
         {
             Contract.Requires(!string.IsNullOrEmpty(item));
             Contract.Requires(ownerWallet != null);
@@ -28,6 +28,7 @@ namespace SpaceMerchants.Server
             Item = item;
             OwnerWallet = ownerWallet;
             Storage = storage;
+            StartingBid = startingBid;
         }
 
         /// <summary>
@@ -49,5 +50,7 @@ namespace SpaceMerchants.Server
         /// The storage.
         /// </value>
         public Storage Storage { get; }
+
+        public int StartingBid { get; }
     }
 }

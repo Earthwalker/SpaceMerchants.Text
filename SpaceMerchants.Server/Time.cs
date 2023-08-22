@@ -31,6 +31,8 @@ namespace SpaceMerchants.Server
         /// </summary>
         private static EventHandler<EventArgs> tickEventHandler;
 
+        private static bool finishedTick;
+
         /// <summary>
         /// Occurs on each tick.
         /// </summary>
@@ -87,6 +89,8 @@ namespace SpaceMerchants.Server
         /// </summary>
         public static void Start()
         {
+            finishedTick = true;
+
             if (tickTimer == null)
                 tickTimer = new Timer(OnTickEvent, null, 0, TickPeriod);
             else
@@ -129,6 +133,11 @@ namespace SpaceMerchants.Server
         /// <param name="source">The source.</param>
         private static void OnTickEvent(object source)
         {
+            if (!finishedTick)
+                return;
+
+            finishedTick = false;
+
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
@@ -139,6 +148,8 @@ namespace SpaceMerchants.Server
 
             stopwatch.Stop();
             Game.WriteLine("Step time: " + stopwatch.Elapsed.ToString(), MessageType.Message);
+
+            finishedTick = true;
         }
     }
 }

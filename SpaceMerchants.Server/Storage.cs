@@ -210,18 +210,15 @@ namespace SpaceMerchants.Server
             if (amount == 0)
                 return 0;
 
-            // add the cargo to the target
-            amount = target.Add(item, amount);
-
-            if (amount == 0)
-                return 0;
-
             // remove the cargo
             if (!Remove(item, amount))
             {
                 target.Remove(item, amount);
                 return 0;
             }
+
+            // add the cargo to the target
+            amount = target.Add(item, amount);
 
             return amount;
         }
