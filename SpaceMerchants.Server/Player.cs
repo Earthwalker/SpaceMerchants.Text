@@ -134,6 +134,13 @@ namespace SpaceMerchants.Server
         public Dictionary<string, MessageType> Replies { get; } = new Dictionary<string, MessageType>();
 
         /// <summary>
+        /// Gets or sets the replies.
+        /// </summary>
+        /// <value>The replies.</value>
+        public Dictionary<string, MessageType> OldReplies { get; } = new Dictionary<string, MessageType>();
+
+
+        /// <summary>
         /// Use menu.
         /// </summary>
         /// <param name="menuItem">The menu item.</param>
@@ -195,7 +202,10 @@ namespace SpaceMerchants.Server
                 Replies.Add(reply.Key, reply.Value);
 
             if (Replies.Count == 0)
-                Replies.Add("Invalid input", MessageType.Default);
+                Replies.Add("Invalid input", MessageType.Error);
+
+            if (Replies.Count(r => r.Value == MessageType.Error) == Replies.Count)
+                Replies.AddRange(OldReplies.Where(r => r.Value != MessageType.Error));
         }
 
         /// <summary>
@@ -367,7 +377,7 @@ namespace SpaceMerchants.Server
                 if (int.TryParse(Input, out index) && index > 0 && index <= listings.Count)
                 {
                     selectedItem = listings[index - 1].Item;
-                    reply.Add($"Amount to buy? ({Ship.Cargo.GetAmount(selectedItem)})", MessageType.Question);
+                    reply.Add($"Amount to buy? ({Ship.Cargo.GetAmount(selectedItem)} in cargo)", MessageType.Question);
                     selectedAmount = -1;
                 }
                 else
@@ -377,12 +387,12 @@ namespace SpaceMerchants.Server
             else if (selectedAmount == -1)
             {
                 if (string.IsNullOrEmpty(Input))
-                    selectedAmount = 0;
+                    selectedAmount = 1;
                 else
                     int.TryParse(Input, out selectedAmount);
 
                 if (selectedAmount >= 0)
-                    reply.Add($"Starting bid amount per item (0 for suggested)?", MessageType.Question);
+                    reply.Add($"Starting bid amount per item (0 for last sold price)?", MessageType.Question);
                 else
                     reply.Add("Must be a number 0 or larger", MessageType.Error);
             }
@@ -392,13 +402,13 @@ namespace SpaceMerchants.Server
                 int bidAmount = -1;
 
                 if (string.IsNullOrEmpty(Input))
-                    bidAmount = 0;
+                    bidAmount = Ship.Outpost.GetLastSoldPrice(selectedItem);
                 else
                     int.TryParse(Input, out bidAmount);
 
                 if (bidAmount > 0)
                 {
-                    Ship.Outpost.Bids.Add(new Bid(selectedItem, selectedAmount, bidAmount, Ship.Wallet, Ship.Cargo));
+                    Ship.Outpost.Bids.Add(new Bid(selectedItem, selectedAmount, bidAmount, Ship.Wallet, Ship.Cargo, this));
                     reply.Add($"Bid of {bidAmount} bits placed for {selectedAmount} {selectedItem.Split('.').Last()}", MessageType.Message);
 
                     // return to buy menu
@@ -499,7 +509,7 @@ namespace SpaceMerchants.Server
 
                 if (startingBid >= 0)
                 {
-                    var listing = Ship.Outpost.CreateListing(selectedItem, selectedAmount, Ship.Cargo, startingBid, Ship.Wallet);
+                    var listing = Ship.Outpost.CreateListing(selectedItem, selectedAmount, Ship.Cargo, startingBid, Ship.Wallet, this);
 
                     if (listing != null)
                     {

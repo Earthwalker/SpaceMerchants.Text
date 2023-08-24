@@ -242,7 +242,7 @@ namespace SpaceMerchants
             }
 
             // show help
-            Game.WriteLine("Item not found", MessageType.Error);
+            Game.WriteLine("Invalid input", MessageType.Error);
         }
 
         /// <summary>

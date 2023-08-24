@@ -131,6 +131,8 @@ namespace SpaceMerchants
         private void OnDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
         {
             Game.WriteLine($"Client disconnected {disconnectInfo.Reason}", MessageType.Message);
+
+            Game.Player.MainMenu();
         }
 
         public void Send(NetDataWriter writer)

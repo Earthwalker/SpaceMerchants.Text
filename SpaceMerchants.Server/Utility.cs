@@ -138,5 +138,17 @@ namespace SpaceMerchants.Server
 
             return null;
         }
+
+        /// <summary>
+        /// Adds the range of values to the <see cref="ICollection{Type}"/>.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="Type"/>.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="collection">The collection.</param>
+        public static void AddRange<T>(this ICollection<T> source, IEnumerable<T> collection)
+        {
+            foreach (var item in collection)
+                source.Add(item);
+        }
     }
 }

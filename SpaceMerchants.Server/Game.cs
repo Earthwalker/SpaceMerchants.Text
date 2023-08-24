@@ -338,6 +338,8 @@ namespace SpaceMerchants.Server
                         writer.Put((byte)reply.Value);
                     }
 
+                    player.Value.OldReplies.Clear();
+                    player.Value.OldReplies.AddRange(player.Value.Replies);
                     player.Value.Replies.Clear();
 
                     send = true;
