@@ -22,7 +22,7 @@ namespace SpaceMerchants.Server
         /// <param name="bidAmount">The bid amount.</param>
         /// <param name="wallet">The wallet to retrieve the funds from.</param>
         /// <param name="storage">The storage to transfer the cargo to upon winning.</param>
-        public Bid(string item, int amount, int bidAmount, Wallet wallet, Storage storage)
+        public Bid(string item, int amount, int bidAmount, Wallet wallet, Storage storage, Player player = null)
         {
             Contract.Requires(!string.IsNullOrEmpty(item));
             Contract.Requires(amount > 0);
@@ -35,6 +35,7 @@ namespace SpaceMerchants.Server
             BidAmount = bidAmount;
             Wallet = wallet;
             Storage = storage;
+            Player = player;
         }
 
         /// <summary>
@@ -70,5 +71,10 @@ namespace SpaceMerchants.Server
         /// </summary>
         /// <value>The storage.</value>
         public Storage Storage { get; }
+
+        /// <summary>
+        /// Gets the player who placed the bid if any.
+        /// </summary>
+        public Player Player { get; }
     }
 }

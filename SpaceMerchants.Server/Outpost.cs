@@ -10,6 +10,7 @@ namespace SpaceMerchants.Server
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Linq;
+    using System.Security.Cryptography;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -104,7 +105,7 @@ namespace SpaceMerchants.Server
 
             // populate popularity index with item types
             foreach (var itemType in Game.ItemTypes)
-                PopularityIndex.Add(itemType, 0);
+                PopularityIndex.Add(itemType, 1);
 
             ProductionRate = (int)Size;
         }
@@ -174,7 +175,7 @@ namespace SpaceMerchants.Server
         /// <value>
         /// The bids.
         /// </value>
-        public List<Bid> Bids { get; } = new List<SpaceMerchants.Server.Bid>();
+        public List<Bid> Bids { get; } = new List<Bid>();
 
         /// <summary>
         /// Gets the warehouses.
@@ -255,7 +256,7 @@ namespace SpaceMerchants.Server
         /// <param name="startingBidAmount">The price.</param>
         /// <param name="wallet">The wallet.</param>
         /// <returns>The new listing.</returns>
-        public List<Listing> CreateListing(string item, int amount, Storage storage, int startingBidAmount, Wallet wallet)
+        public List<Listing> CreateListing(string item, int amount, Storage storage, int startingBidAmount, Wallet wallet, Player player = null)
         {
             Contract.Requires(!string.IsNullOrEmpty(item));
             Contract.Requires(amount >= 0);
@@ -283,7 +284,7 @@ namespace SpaceMerchants.Server
             var listings = new List<Listing>();
 
             for (int i = 0; i < amount; i++)
-                listings.Add(new Listing(item, wallet, storage, startingBidAmount));
+                listings.Add(new Listing(item, wallet, storage, startingBidAmount, player));
 
             NewListings.AddRange(listings);
 
@@ -362,6 +363,9 @@ namespace SpaceMerchants.Server
 
                     amount -= amountBought;
 
+                    if (bid.Player != null)
+                        bid.Player.Replies.Add($"Won bid for {item.Key}({amountBought}) for {bid.BidAmount} bits", MessageType.Message);
+
                     // if the winner is the outpost, things are handled differently
                     if (bid.Storage == Storage)
                     {
@@ -374,6 +378,9 @@ namespace SpaceMerchants.Server
                         if (!item.Key.EndsWith("Warehouse"))
                             Storage.Remove(item.Key, amountBought);
                     }
+
+                    // Remove the winning bid.
+                    Bids.Remove(bid);
 
                     break;
                 }
@@ -403,6 +410,9 @@ namespace SpaceMerchants.Server
                         continue;
 
                     debugMessages.Add($"got money: {winningBidsOfItem.FirstOrDefault().Value}");
+                    
+                    if (lister.Player != null)
+                        lister.Player.Replies.Add($"Sold {item.Key} for {amount} bits", MessageType.Message);
 
                     if (winningBidsOfItem.Count > 0)
                         winningBidsOfItem.RemoveAt(0);
@@ -533,6 +543,9 @@ namespace SpaceMerchants.Server
 
             double result = 1;
             int sign = Math.Sign(PopularityIndex[itemType]);
+
+            // Ensure popularity doesn't get out of hand.
+            PopularityIndex[itemType] = PopularityIndex[itemType].Clamp(-10, 10);
 
             if (PopularityIndex[itemType] > 0)
             {
