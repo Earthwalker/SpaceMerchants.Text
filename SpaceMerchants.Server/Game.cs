@@ -351,8 +351,8 @@ namespace SpaceMerchants.Server
             }
 
             // show stats at midnight
-            if (Time.DateTime.Hour == 0)
-                ServerAdmin.SelectMainMenuItem(MainMenuItem.Data);
+            //if (Time.DateTime.Hour == 0)
+            //    ServerAdmin.SelectMainMenuItem(MainMenuItem.Data);
         }
 
         /// <summary>

@@ -147,7 +147,7 @@ namespace SpaceMerchants.Server
                 DateTime += TickTimeSpan;
 
             stopwatch.Stop();
-            Game.WriteLine("Step time: " + stopwatch.Elapsed.ToString(), MessageType.Message);
+            Game.WriteLine("Processed " + DateTime + " in " + stopwatch.ElapsedMilliseconds.ToString() + "ms", MessageType.Message);
 
             finishedTick = true;
         }
