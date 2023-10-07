@@ -231,7 +231,7 @@ namespace SpaceMerchants.Server
                 ", MessageType.Message);
 
             WriteLine("A game by Leamware", MessageType.Message);
-            WriteLine("8.21.23", MessageType.Message);
+            WriteLine("10.7.23", MessageType.Message);
             WriteLine();
 
             // generate galaxy

@@ -392,7 +392,7 @@ namespace SpaceMerchants.Server
                     int.TryParse(Input, out selectedAmount);
 
                 if (selectedAmount >= 0)
-                    reply.Add($"Starting bid amount per item (0 for last sold price)?", MessageType.Question);
+                    reply.Add($"Starting bid amount per item (Leave empty for last sold price)?", MessageType.Question);
                 else
                     reply.Add("Must be a number 0 or larger", MessageType.Error);
             }
