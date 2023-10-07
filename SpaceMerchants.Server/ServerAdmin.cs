@@ -49,7 +49,7 @@ namespace SpaceMerchants.Server
 		public static void ShowHelp()
 		{
 			// show menu items
-            Game.WriteLine("1. (S)ave - Displays the current news", MessageType.Default);
+            Game.WriteLine("1. (S)ave - Saves the world state (not functional)", MessageType.Default);
             Game.WriteLine("2. (D)ata - Show debug data", MessageType.Default);
             Game.WriteLine("3. (E)xit - Exits the current menu", MessageType.Default);
 		}
